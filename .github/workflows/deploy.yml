@@ -1,0 +1,47 @@
+name: Deploy MCP lab to Cloudflare
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: minamo-mcp-lab-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out lab source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Generate Cloudflare runtime types
+        run: npm run cf-typegen
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Run lab smoke tests
+        run: npm test
+
+      - name: Verify Worker bundle
+        run: npm run build
+
+      - name: Deploy lab Worker
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: "9185bd88b5b23aad465e99f1746a6367"
+          command: deploy

@@ -32,3 +32,17 @@ The live lab origin is https://minamo-mcp-lab.jlscott-uk.workers.dev.
 ## Self-hosting route
 
 See docs/SELF-HOSTING-GATES.md for the V2 compatibility findings and security gates. V2 already builds for Workers and uses D1/R2; the principal blocker is replacing Sites-dispatched authentication with a verified, independently hosted issuer and preserving the existing per-owner protections.
+
+## GitHub Actions deployment
+
+The manual [Deploy MCP lab to Cloudflare](.github/workflows/deploy.yml) workflow is an alternative to Cloudflare's native Git repository connection. It is deliberately **manual-only** until the first successful, verified deployment.
+
+One-time setup:
+
+1. In this GitHub repository, open **Settings > Secrets and variables > Actions > New repository secret**.
+2. Name it `CLOUDFLARE_API_TOKEN` and paste the token created in the Cloudflare Worker's **Settings > Builds > API token for external CI/CD** section. Never commit or share the token.
+3. In **Actions**, select **Deploy MCP lab to Cloudflare**, choose **Run workflow** on `main`, and inspect the run.
+
+The account ID is already configured in the workflow. The workflow installs locked dependencies, generates types, type-checks, validates the bundle, checks the existing synthetic MCP endpoint, deploys only this `minamo-mcp-lab` Worker, then runs the synthetic endpoint smoke tests again. It does **not** deploy native Minamo V2.
+
+If an Actions run fails before any job step starts, inspect repository **Settings > Actions > General** and account billing/Actions usage. Such a failure is not evidence of a failed Worker build; resolve runner allocation before trying to deploy.
